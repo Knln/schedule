@@ -92,9 +92,12 @@ class Scheduler(object):
         in one hour increments then your job won't be run 60 times in
         between but only once.
         """
+        job_return = {}
         runnable_jobs = (job for job in self.jobs if job.should_run)
         for job in sorted(runnable_jobs):
-            self._run_job(job)
+            ret = self._run_job(job)
+            job_return.update({job.job_func.__name__: ret})
+        return job_return
 
     def run_all(self, delay_seconds=0):
         """
@@ -106,11 +109,14 @@ class Scheduler(object):
 
         :param delay_seconds: A delay added between every executed job
         """
+        job_return = {}
         logger.info('Running *all* %i jobs with %is delay inbetween',
                     len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
-            self._run_job(job)
+            ret = self._run_job(job)
             time.sleep(delay_seconds)
+            job_return.update({job.job_func.__name__: ret})
+        return job_return
 
     def clear(self, tag=None):
         """
@@ -150,6 +156,7 @@ class Scheduler(object):
         ret = job.run()
         if isinstance(ret, CancelJob) or ret is CancelJob:
             self.cancel_job(job)
+        return ret
 
     @property
     def next_run(self):
