@@ -91,12 +91,16 @@ class Scheduler(object):
         that should run every minute and you only call run_pending()
         in one hour increments then your job won't be run 60 times in
         between but only once.
+
+        :return job_return: A list of lists of type [job_name, val]
         """
-        job_return = {}
+        job_return = []
+
         runnable_jobs = (job for job in self.jobs if job.should_run)
         for job in sorted(runnable_jobs):
             ret = self._run_job(job)
-            job_return.update({job.job_func.__name__: ret})
+            job_return.append([job.job_func.__name__, ret])
+
         return job_return
 
     def run_all(self, delay_seconds=0):
@@ -108,14 +112,18 @@ class Scheduler(object):
         over time.
 
         :param delay_seconds: A delay added between every executed job
+
+        :return job_return: A list of lists of type [job_name, val]
         """
-        job_return = {}
+        job_return = []
+
         logger.info('Running *all* %i jobs with %is delay inbetween',
                     len(self.jobs), delay_seconds)
         for job in self.jobs[:]:
             ret = self._run_job(job)
             time.sleep(delay_seconds)
-            job_return.update({job.job_func.__name__: ret})
+            job_return.append([job.job_func.__name__, ret])
+
         return job_return
 
     def clear(self, tag=None):
